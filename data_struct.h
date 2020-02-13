@@ -19,7 +19,7 @@ typedef struct system_state{
     int* sigma;
     int* sequence;
     gsl_rng* rng;
-}
+} system_state;
 
 typedef struct placeholder{
     int leg;
@@ -29,6 +29,6 @@ typedef struct placeholder{
     int* linkv;
     int* vfirst;
     int* vlast;
-}
+} placeholder;
 
 #endif

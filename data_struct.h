@@ -16,6 +16,7 @@ typedef struct system_state{
     int leg;
     int Nsite;
     int length;
+    int noo;
     int* sigma;
     int* sequence;
     gsl_rng* rng;

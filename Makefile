@@ -5,14 +5,14 @@
 CC	= gcc
 
 # define any compile-time flags
-CFLAGS = -Wall -g -fPIC -O3 -std=c99
+CFLAGS = -Wall -g -fPIC -O1 -std=c99
 
 # define openmp flags
 OPENMP  = -fopenmp
 CUOPENMP  = -Xcompiler -fopenmp
 
 # define the direction containing header file
-INCLUDES= -I/usr/local/include -I./
+INCLUDES= -I/usr/local/include -I./ -I./lattice
 
 # define the library path
 LFLAGS	= -L/usr/local/lib
@@ -21,7 +21,7 @@ LFLAGS	= -L/usr/local/lib
 LIBS	= -lm -lgsl -lgslcblas
 
 # define the C object files
-OBJS	= main.o
+OBJS	= data_struct.o lattice/diluted_bilayer_heisenberg.o
 
 #define the directory for object
 OBJSDIR = object
@@ -32,7 +32,7 @@ MAIN	= exe
 all: $(MAIN)
 
 $(MAIN): $(OBJS)
-	$(CC) $(CFLAGS) -o $(MAIN) $(OBJS) $(LIBS) $(LFLAGS) $(INCLUDES) 
+	$(CC) $(CFLAGS) -o $(MAIN) *.o $(LIBS) $(LFLAGS) $(INCLUDES) 
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $^
@@ -46,4 +46,4 @@ lib: $(OBJS)
 
 # clean the executable file and object files
 clean:
-	$(RM) $(OBJS) $(MAIN)
+	$(RM) *.o $(MAIN)

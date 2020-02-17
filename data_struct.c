@@ -140,7 +140,9 @@ void sequence_doubling(lattice_profile* lap, system_state* state, placeholder* w
     lap->beta *=2;
 }
 
+#if 0
 #define TEST_DATA_STRUCT
+#endif
 #ifdef TEST_DATA_STRUCT
 int main(){
     int leg = 4;

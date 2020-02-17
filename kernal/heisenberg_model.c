@@ -56,7 +56,7 @@ static void hm_diagonal_update(system_state* state, placeholder* ph, const latti
     state->noo = noo;
 }
 
-static void hm_construct_link_vertex_list(placeholder* ph,const lattice_profile* lap, const system_state* state){
+static void hm_construct_link_vertex_list(placeholder* ph, const lattice_profile* lap, const system_state* state){
     int Nsite   = lap->Nsite;
     int length  = state->length;
 
@@ -92,3 +92,86 @@ static void hm_construct_link_vertex_list(placeholder* ph,const lattice_profile*
         }
     }
 }
+
+static void hm_loop_update(placeholder* ph, system_state* state){
+    int nu0,nup,nun,flip=-1;
+    int length = ph->length;
+
+    for(nu0=0;nu0<(length*4);nu0+=2){
+        if(ph->linkv[nu0]>=0){
+            nun = nu0;
+            if(gsl_rng_uniform_pos(state->rng)<0.5) flip=-1;
+            else flip=-2;
+            while(ph->linkv[nun]>=0){
+                ph->linkv[nun] = flip;
+                nup = nun^1;
+                nun = ph->linkv[nup];
+                ph->linkv[nup]=flip;
+            }
+        }
+    } 
+}
+
+static void hm_flip_bit_operator(placeholder* ph, system_state* state){
+    int nu,type,i_bond,index;
+    int length = ph->length;
+    int Nsite  = ph->Nsite;
+    
+    for(nu=0;nu<(4*length);nu+=2){
+        if(ph->linkv[nu]==-2){
+            type = state->sequence[nu/4]%2;
+            i_bond = state->sequence[nu/4]/2;
+            state->sequence[nu/4] = i_bond*2+type^1;
+        }
+    }
+
+    for(index=0;index<Nsite;++index){
+        nu = ph->vlast[index];
+        if(nu==-1 && gsl_rng_uniform_pos(state->rng)<0.5) state->sigma[index]*= -1;
+        else if(ph->linkv[nu]==-2) state->sigma[index]*= -1;
+    }
+}
+
+void hm_monte_carlo_sweep(system_state* state, placeholder* ph, const lattice_profile* lap){
+    hm_diagonal_update(state,ph,lap);
+    hm_construct_link_vertex_list(ph,lap,state);
+    hm_loop_update(ph,state);
+    hm_flip_bit_operator(ph,state);
+}
+
+#if 1
+#define TEST_HEISENBERG_MODEL
+#endif
+#ifdef TEST_HEISENBERG_MODEL
+
+#include "diluted_bilayer_heisenberg.h"
+
+int main(){
+    int seed=89798332;
+    int nx=4;
+    int ny=4;
+    double p=0.1;
+    double jbond=0.3;
+    double beta=10;
+    int nsweep=10000;
+
+    lattice_profile* lap;
+    system_state* state;
+    placeholder* ph;
+
+    set_site_diluted_bilayer(&lap,&state,&ph,nx,ny,jbond,p,seed);
+
+    lattice_profile_set_beta(lap,beta);
+
+    for(int i=0;i<nsweep;++i){
+        hm_monte_carlo_sweep(state,ph,lap);
+        printf("sweep %d : noo %d\n",i,state->noo);
+    }
+
+    destroy_placeholder(ph);
+    destroy_system_state(state);
+    destroy_lattice_profile(lap);
+
+    return 0;
+}
+#endif

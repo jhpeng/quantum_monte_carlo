@@ -83,7 +83,7 @@ void set_site_diluted_bilayer(lattice_profile** lap, system_state** state, place
 }
 
 
-#if 1
+#if 0
 #define TEST_DILUTED_BILAYER_HEISENBERG
 #endif
 #ifdef TEST_DILUTED_BILAYER_HEISENBERG

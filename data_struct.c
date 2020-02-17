@@ -65,11 +65,12 @@ void system_state_set_rng(system_state* state, int seed){
 void system_state_adjust_cutoff(system_state* state, double buffer){
     if(state->noo*buffer<state->length){
         int newl = (int)state->noo*buffer;
-        int newsq* = (int*)malloc(sizeof(int)*newl);
+        int* newsq = (int*)malloc(sizeof(int)*newl);
+        int length = state->length;
         for(int i=0;i<length;++i) newsq[i]=state->sequence[i];
         for(int i=length;i<newl;++i) newsq[i]=-1;
 
-        free(state->sequence)
+        free(state->sequence);
         state->sequence = newsq;
         state->length = newl;
     }
@@ -101,7 +102,7 @@ void destroy_placeholder(placeholder* ws){
     free(ws);
 }
 
-void sequence_doubling(system_state* state, placeholder* ws){
+void sequence_doubling(lattice_profile* lap, system_state* state, placeholder* ws){
     if(state->leg!=ws->leg){
         printf("data_struct.c sequence_doubling : The number of leg in state and ws should be the same!\n");
         exit(-1);
@@ -114,14 +115,20 @@ void sequence_doubling(system_state* state, placeholder* ws){
         printf("data_struct.c sequence_doubling : The length in state and ws should be the same!\n");
         exit(-1);
     }
+    else if(state->leg!=lap->leg){
+        printf("data_struct.c sequence_doubling : The number of leg in state and lap should be the same!\n");
+        exit(-1);
+    }
     int newl = state->length*2;
-    int newsq* = (int*)malloc(sizeof(int)*newl);
+    int* newsq = (int*)malloc(sizeof(int)*newl);
+    int length = state->length;
+    int leg = state->leg;
     for(int i=0;i<length;++i){
         newsq[i]=state->sequence[i];
         newsq[i+state->length]=state->sequence[i];
     }
 
-    free(state->sequence)
+    free(state->sequence);
     state->sequence = newsq;
     state->length = newl;
     state->noo *= 2;
@@ -129,5 +136,31 @@ void sequence_doubling(system_state* state, placeholder* ws){
     free(ws->linkv);
     ws->linkv = (int*)malloc(sizeof(int)*newl*leg);
     ws->length = newl;
+
+    lap->beta *=2;
 }
 
+#define TEST_DATA_STRUCT
+#ifdef TEST_DATA_STRUCT
+int main(){
+    int leg = 4;
+    int Nsite = 32;
+    int Nb = 64;
+    int length = 1024;
+    double beta = 20;
+
+    for(int i=0;i<10000000;++i){
+    lattice_profile* lap = create_lattice_profile(leg,Nsite,Nb);
+    system_state* state = create_system_state(leg,Nsite,length);
+    placeholder* ph = create_placeholder(leg,Nsite,length);
+
+    lattice_profile_set_beta(lap,beta);
+    sequence_doubling(lap,state,ph);
+
+    destroy_placeholder(ph);
+    destroy_system_state(state);
+    destroy_lattice_profile(lap);
+    }
+    return 0;
+}
+#endif

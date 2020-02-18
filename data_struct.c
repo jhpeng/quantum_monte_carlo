@@ -171,4 +171,31 @@ int main(){
     }
     return 0;
 }
+
+estimators* create_estimators(int nsample, int nobs){
+    estimators* est = (estimators*)malloc(sizeof(estimators));
+    est->nsample=nsample;
+    est->nobs=nobs;
+    est->data=(double*)malloc(sizeof(double)*nobs*nsample);
+    est->means=(double*)malloc(sizeof(double)*nobs);
+
+    return est;
+}
+
+void destroy_estimators(estimators* est){
+    free(est->data);
+    free(est->means);
+    free(est);
+}
+
+double estimators_get_data(const estimators* est, int i_obs, int i_sample){
+    int nobs = est->nobs;
+    return est->data[nobs*i_sample+i_obs];
+}
+
+void estimators_write_data(estimators* est, int i_obs, int i_sample, double data){
+    int nobs = est->nobs;
+    est->data[nobs*i_sample+i_obs]=data;
+}
+
 #endif

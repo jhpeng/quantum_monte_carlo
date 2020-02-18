@@ -32,6 +32,13 @@ typedef struct placeholder{
     int* vlast;
 } placeholder;
 
+typedef struct estimators{
+    int nsample;
+    int nobs;
+    double* data;
+    double* means;
+} estimators;
+
 lattice_profile* create_lattice_profile(
             int leg, 
             int Nsite, 
@@ -75,5 +82,22 @@ void sequence_doubling(
             placeholder* ws);
 
 
+estimators* create_estimators(
+            int nsample, 
+            int nobs);
+
+void destroy_estimators(
+            estimators* est);
+
+double estimators_get_data(
+            const estimators* est, 
+            int i_obs, 
+            int i_sample);
+
+void estimators_write_data(
+            estimators* est, 
+            int i_obs, 
+            int i_sample, 
+            double data);
 
 #endif

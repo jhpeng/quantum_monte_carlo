@@ -161,7 +161,7 @@ void hm_monte_carlo_sweep(system_state* state, placeholder* ph, const lattice_pr
     //hm_check_weight(ph,lap,state);
 }
 
-#if 1
+#if 0
 #define TEST_HEISENBERG_MODEL
 #endif
 #ifdef TEST_HEISENBERG_MODEL

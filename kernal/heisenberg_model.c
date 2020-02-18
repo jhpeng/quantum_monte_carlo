@@ -17,6 +17,25 @@ void hm_propagate_state(placeholder* ph, const lattice_profile* lap, int sp){
     }
 }
 
+static void hm_check_weight(placeholder* ph, const lattice_profile* lap, const system_state* state){
+    int i;
+    int Nsite   = lap->Nsite;
+    int length  = state->length;
+    
+    for(i=0;i<Nsite;++i) ph->sigma[i] = state->sigma[i];
+    for(i=0;i<length;++i) hm_propagate_state(ph,lap,state->sequence[i]);
+
+    int check=1;
+    for(i=0;i<Nsite && check;++i){
+        if(ph->sigma[i]!=state->sigma[i]) check=0;
+    }
+
+    if(check==0){
+        printf("something wrong!\n");
+        exit(-1);
+    }
+}
+
 static void hm_diagonal_update(system_state* state, placeholder* ph, const lattice_profile* lap){
     int i,p,i_bond,s1,s2;
     double dis;
@@ -127,7 +146,9 @@ static void hm_flip_bit_operator(placeholder* ph, system_state* state){
 
     for(index=0;index<Nsite;++index){
         nu = ph->vlast[index];
-        if(nu==-1 && gsl_rng_uniform_pos(state->rng)<0.5) state->sigma[index]*= -1;
+        if(nu==-1){
+            if(gsl_rng_uniform_pos(state->rng)<0.5) state->sigma[index]*= -1;
+        }
         else if(ph->linkv[nu]==-2) state->sigma[index]*= -1;
     }
 }
@@ -137,6 +158,7 @@ void hm_monte_carlo_sweep(system_state* state, placeholder* ph, const lattice_pr
     hm_construct_link_vertex_list(ph,lap,state);
     hm_loop_update(ph,state);
     hm_flip_bit_operator(ph,state);
+    //hm_check_weight(ph,lap,state);
 }
 
 #if 1
@@ -148,12 +170,13 @@ void hm_monte_carlo_sweep(system_state* state, placeholder* ph, const lattice_pr
 
 int main(){
     int seed=89798332;
-    int nx=4;
-    int ny=4;
-    double p=0.1;
-    double jbond=0.3;
-    double beta=10;
-    int nsweep=10000;
+    int nx=20;
+    int ny=20;
+    double p=0.407;
+    double jbond=0.15;
+    double beta=20;
+    int nthermal=10000;
+    int nsweep=20000;
 
     lattice_profile* lap;
     system_state* state;
@@ -163,9 +186,18 @@ int main(){
 
     lattice_profile_set_beta(lap,beta);
 
+    for(int i=0;i<nthermal;++i){
+        hm_monte_carlo_sweep(state,ph,lap);
+        adjust_cutoff(state,ph,1.5);
+    }
+
     for(int i=0;i<nsweep;++i){
         hm_monte_carlo_sweep(state,ph,lap);
-        printf("sweep %d : noo %d\n",i,state->noo);
+
+        double noo = state->noo;
+        double noo2 = noo*noo;
+        printf("sweep %d : noo %f | noo^2 %f\n",i,noo,noo2);
+
     }
 
     destroy_placeholder(ph);

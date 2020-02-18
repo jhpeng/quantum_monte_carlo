@@ -64,9 +64,16 @@ placeholder* create_placeholder(
 void destroy_placeholder(
             placeholder* ws);
 
+void adjust_cutoff(
+            system_state* state, 
+            placeholder* ph, 
+            double buffer);
+
 void sequence_doubling(
             lattice_profile* lap,
             system_state* state, 
             placeholder* ws);
+
+
 
 #endif

@@ -62,20 +62,6 @@ void system_state_set_rng(system_state* state, int seed){
     gsl_rng_set(state->rng,seed);
 }
 
-void system_state_adjust_cutoff(system_state* state, double buffer){
-    if(state->noo*buffer<state->length){
-        int newl = (int)state->noo*buffer;
-        int* newsq = (int*)malloc(sizeof(int)*newl);
-        int length = state->length;
-        for(int i=0;i<length;++i) newsq[i]=state->sequence[i];
-        for(int i=length;i<newl;++i) newsq[i]=-1;
-
-        free(state->sequence);
-        state->sequence = newsq;
-        state->length = newl;
-    }
-}
-
 placeholder* create_placeholder(int leg, int Nsite, int length){
     if(leg%2==1){
         printf("data_struct.c create_placeholder : leg should be even number\n");
@@ -100,6 +86,26 @@ void destroy_placeholder(placeholder* ws){
     free(ws->vlast);
     free(ws->linkv);
     free(ws);
+}
+
+void adjust_cutoff(system_state* state, placeholder* ph, double buffer){
+    if(state->noo*buffer>state->length){
+        int newl = (int)state->noo*buffer;
+        int leg    = ph->leg;
+        int* newsq = (int*)malloc(sizeof(int)*newl);
+        int* newlv = (int*)malloc(sizeof(int)*newl*leg);
+        int length = state->length;
+        for(int i=0;i<length;++i) newsq[i]=state->sequence[i];
+        for(int i=length;i<newl;++i) newsq[i]=-1;
+
+        free(state->sequence);
+        state->sequence = newsq;
+        state->length = newl;
+
+        free(ph->linkv);
+        ph->linkv = newlv;
+        ph->length = newl;
+    }
 }
 
 void sequence_doubling(lattice_profile* lap, system_state* state, placeholder* ws){

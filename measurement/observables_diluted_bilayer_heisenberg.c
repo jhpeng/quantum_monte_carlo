@@ -3,17 +3,18 @@
 #include "data_struct.h"
 #include "estimator.h"
 
-void measurement_diluted_bilayor(estimators* est, placeholder* ph, const system_state* state, const lattice_profile* lap, int i_sample){
-    int nobs  = est->nobs;
-    int Nsite = lap->Nsite;
+void measurement_diluted_bilayor(estimators* est, placeholder* ph, const system_state* state, const lattice_profile* lap, int nx, int ny, int i_sample){
+    //int nobs    = est->nobs;
+    int Nsite   = lap->Nsite;
+    double beta = lap->beta;
 
     double mz =0;
 
     for(int i=0;i<Nsite;++i){
         mz += state->sigma[i];
     }
-    double mag  = mz/Nsite;
-    double mag2 = mz*mz/Nsite;
+    double mag  = mz/Nsite*0.5;
+    double mag2 = mz*mz/Nsite*0.25*beta;
     double noo  = state->noo;
     double noo2 = noo*noo;
 
@@ -24,7 +25,7 @@ void measurement_diluted_bilayor(estimators* est, placeholder* ph, const system_
 }
 
 
-#if 1
+#if 0
 #define TEST_OBSERVABLES_DILUTED_BILAYER_HEISENBERG
 #endif
 #ifdef TEST_OBSERVABLES_DILUTED_BILAYER_HEISENBERG
@@ -41,6 +42,7 @@ int main(){
     double beta=20;
     int nthermal=10000;
     int nsweep=20000;
+    int nblock=20;
 
     lattice_profile* lap;
     system_state* state;
@@ -56,14 +58,14 @@ int main(){
         adjust_cutoff(state,ph,1.5);
     }
 
-    for(int i=0;i<nsweep;++i){
-        hm_monte_carlo_sweep(state,ph,lap);
-
-        
-        measurement_diluted_bilayor(est,ph,state,lap,i);
+    for(int b=0;b<nblock;++b){
+        for(int i=0;i<nsweep;++i){
+            hm_monte_carlo_sweep(state,ph,lap);
+            measurement_diluted_bilayor(est,ph,state,lap,nx,ny,i);
+        }
+        estimators_save_data(est,lap,"test.txt");
     }
 
-    estimators_save_data(est,lap,"test.txt");
 
     destroy_placeholder(ph);
     destroy_system_state(state);

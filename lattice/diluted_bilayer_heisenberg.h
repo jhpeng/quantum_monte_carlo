@@ -10,3 +10,13 @@ void set_site_diluted_bilayer(
             double p, 
             int seed);
 
+void set_dimer_diluted_bilayer(
+            lattice_profile** lap, 
+            system_state** state, 
+            placeholder** ph, 
+            int nx, 
+            int ny, 
+            double jbond, 
+            double p, 
+            int seed);
+

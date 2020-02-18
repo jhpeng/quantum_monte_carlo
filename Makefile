@@ -12,7 +12,7 @@ OPENMP  = -fopenmp
 CUOPENMP  = -Xcompiler -fopenmp
 
 # define the direction containing header file
-INCLUDES= -I/usr/local/include -I./ -I./lattice
+INCLUDES= -I/usr/local/include -I./ -I./lattice -I./kernal
 
 # define the library path
 LFLAGS	= -L/usr/local/lib
@@ -21,7 +21,7 @@ LFLAGS	= -L/usr/local/lib
 LIBS	= -lm -lgsl -lgslcblas
 
 # define the C object files
-OBJS	= data_struct.o estimator.o  lattice/diluted_bilayer_heisenberg.o kernal/heisenberg_model.o
+OBJS	= data_struct.o estimator.o  lattice/diluted_bilayer_heisenberg.o kernal/heisenberg_model.o measurement/observables_diluted_bilayer_heisenberg.o
 
 #define the directory for object
 OBJSDIR = object

@@ -146,32 +146,6 @@ void sequence_doubling(lattice_profile* lap, system_state* state, placeholder* w
     lap->beta *=2;
 }
 
-#if 0
-#define TEST_DATA_STRUCT
-#endif
-#ifdef TEST_DATA_STRUCT
-int main(){
-    int leg = 4;
-    int Nsite = 32;
-    int Nb = 64;
-    int length = 1024;
-    double beta = 20;
-
-    for(int i=0;i<10000000;++i){
-    lattice_profile* lap = create_lattice_profile(leg,Nsite,Nb);
-    system_state* state = create_system_state(leg,Nsite,length);
-    placeholder* ph = create_placeholder(leg,Nsite,length);
-
-    lattice_profile_set_beta(lap,beta);
-    sequence_doubling(lap,state,ph);
-
-    destroy_placeholder(ph);
-    destroy_system_state(state);
-    destroy_lattice_profile(lap);
-    }
-    return 0;
-}
-
 estimators* create_estimators(int nsample, int nobs){
     estimators* est = (estimators*)malloc(sizeof(estimators));
     est->nsample=nsample;
@@ -196,6 +170,32 @@ double estimators_get_data(const estimators* est, int i_obs, int i_sample){
 void estimators_write_data(estimators* est, int i_obs, int i_sample, double data){
     int nobs = est->nobs;
     est->data[nobs*i_sample+i_obs]=data;
+}
+
+#if 0
+#define TEST_DATA_STRUCT
+#endif
+#ifdef TEST_DATA_STRUCT
+int main(){
+    int leg = 4;
+    int Nsite = 32;
+    int Nb = 64;
+    int length = 1024;
+    double beta = 20;
+
+    for(int i=0;i<10000000;++i){
+    lattice_profile* lap = create_lattice_profile(leg,Nsite,Nb);
+    system_state* state = create_system_state(leg,Nsite,length);
+    placeholder* ph = create_placeholder(leg,Nsite,length);
+
+    lattice_profile_set_beta(lap,beta);
+    sequence_doubling(lap,state,ph);
+
+    destroy_placeholder(ph);
+    destroy_system_state(state);
+    destroy_lattice_profile(lap);
+    }
+    return 0;
 }
 
 #endif

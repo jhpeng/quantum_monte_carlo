@@ -16,7 +16,7 @@ static void calc_means(estimators* est){
     }
 }
 
-void estimator_save_data(estimators* est, const lattice_profile* lap, const char* filename){
+void estimators_save_data(estimators* est, const lattice_profile* lap, const char* filename){
     calc_means(est);
 
     FILE* outfile = fopen(filename,"a");

@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "data_struct.h"
 
-void estimator_save_data(
+void estimators_save_data(
             estimators* est, 
             const lattice_profile* lap, 
             const char* filename);

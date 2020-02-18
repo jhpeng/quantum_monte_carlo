@@ -21,7 +21,7 @@ LFLAGS	= -L/usr/local/lib
 LIBS	= -lm -lgsl -lgslcblas
 
 # define the C object files
-OBJS	= data_struct.o lattice/diluted_bilayer_heisenberg.o kernal/heisenberg_model.o
+OBJS	= data_struct.o estimator.o  lattice/diluted_bilayer_heisenberg.o kernal/heisenberg_model.o
 
 #define the directory for object
 OBJSDIR = object

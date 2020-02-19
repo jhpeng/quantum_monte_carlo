@@ -8,10 +8,12 @@ void measurement_diluted_bilayor(estimators* est, placeholder* ph, const system_
     int Nsite   = lap->Nsite;
     double beta = lap->beta;
 
-    double mz =0;
+    double mz=0;
+    int vol=0;
 
     for(int i=0;i<Nsite;++i){
         mz += state->sigma[i];
+        if(state->sigma[i]!=0) vol++;
     }
     double mag  = mz/Nsite*0.5;
     double mag2 = mz*mz/Nsite*0.25*beta;
@@ -22,6 +24,7 @@ void measurement_diluted_bilayor(estimators* est, placeholder* ph, const system_
     estimators_write_data(est,1,i_sample,mag2);
     estimators_write_data(est,2,i_sample,noo);
     estimators_write_data(est,3,i_sample,noo2);
+    estimators_write_data(est,4,i_sample,vol);
 }
 
 

@@ -108,7 +108,10 @@ void set_dimer_diluted_bilayer(lattice_profile** lap, system_state** state, plac
         }
     }
 
-    for(int i_bond=0;i_bond<Nb;++i_bond){
+    int nb=0;
+    int i_bond;
+    int* rlist = malloc(sizeof(int)*Nb);
+    for(i_bond=0;i_bond<Nb;++i_bond){
         t = i_bond%(nx*ny);
         q = i_bond/(nx*ny);
         i = t%nx;
@@ -119,7 +122,11 @@ void set_dimer_diluted_bilayer(lattice_profile** lap, system_state** state, plac
             index2 = ((i+1)%nx)+nx*j;
             (*lap)->bond2index[i_bond*2+0] = index1;
             (*lap)->bond2index[i_bond*2+1] = index2;
-            if(epsilon[index1] && epsilon[index2]) (*lap)->bondst[i_bond] = 1;
+            if(epsilon[index1] && epsilon[index2]){
+                (*lap)->bondst[i_bond] = 1;
+                rlist[nb] = i_bond;
+                nb++;
+            }
             else (*lap)->bondst[i_bond] = 0;
         }
         else if(q==1){
@@ -127,7 +134,11 @@ void set_dimer_diluted_bilayer(lattice_profile** lap, system_state** state, plac
             index2 = i+nx*((j+1)%ny);
             (*lap)->bond2index[i_bond*2+0] = index1;
             (*lap)->bond2index[i_bond*2+1] = index2;
-            if(epsilon[index1] && epsilon[index2]) (*lap)->bondst[i_bond] = 1;
+            if(epsilon[index1] && epsilon[index2]){
+                (*lap)->bondst[i_bond] = 1;
+                rlist[nb] = i_bond;
+                nb++;
+            }
             else (*lap)->bondst[i_bond] = 0;
         }
         else if(q==2){
@@ -135,7 +146,11 @@ void set_dimer_diluted_bilayer(lattice_profile** lap, system_state** state, plac
             index2 = ((i+1)%nx)+nx*j+nx*ny;
             (*lap)->bond2index[i_bond*2+0] = index1;
             (*lap)->bond2index[i_bond*2+1] = index2;
-            if(epsilon[index1] && epsilon[index2]) (*lap)->bondst[i_bond] = 1;
+            if(epsilon[index1] && epsilon[index2]){
+                (*lap)->bondst[i_bond] = 1;
+                rlist[nb] = i_bond;
+                nb++;
+            }
             else (*lap)->bondst[i_bond] = 0;
         }
         else if(q==3){
@@ -143,7 +158,11 @@ void set_dimer_diluted_bilayer(lattice_profile** lap, system_state** state, plac
             index2 = i+nx*((j+1)%ny)+nx*ny;
             (*lap)->bond2index[i_bond*2+0] = index1;
             (*lap)->bond2index[i_bond*2+1] = index2;
-            if(epsilon[index1] && epsilon[index2]) (*lap)->bondst[i_bond] = 1;
+            if(epsilon[index1] && epsilon[index2]){
+                (*lap)->bondst[i_bond] = 1;
+                rlist[nb] = i_bond;
+                nb++;
+            }
             else (*lap)->bondst[i_bond] = 0;
         }
         else if(q==4){
@@ -151,17 +170,34 @@ void set_dimer_diluted_bilayer(lattice_profile** lap, system_state** state, plac
             index2 = i+nx*j+nx*ny;
             (*lap)->bond2index[i_bond*2+0] = index1;
             (*lap)->bond2index[i_bond*2+1] = index2;
-            if(epsilon[index1] && epsilon[index2]) (*lap)->bondst[i_bond] = jbond;
+            if(epsilon[index1] && epsilon[index2]){
+                (*lap)->bondst[i_bond] = jbond;
+                rlist[nb] = i_bond;
+                nb++;
+            }
             else (*lap)->bondst[i_bond] = 0;
         }
     }
+
     for(i=0;i<Nsite;++i){
         if(epsilon[i]==0) (*state)->sigma[i]=0;
         else if(gsl_rng_uniform_pos((*state)->rng)<0.5) (*state)->sigma[i]=1;
         else (*state)->sigma[i]=-1;
     }
 
+    lattice_profile* new_lap = create_lattice_profile(leg,Nsite,nb);
+    for(i=0;i<nb;++i){
+        i_bond = rlist[i];
+        new_lap->bond2index[i*2+0] = (*lap)->bond2index[i_bond*2+0];
+        new_lap->bond2index[i*2+1] = (*lap)->bond2index[i_bond*2+1];
+        new_lap->bondst[i] = (*lap)->bondst[i_bond];
+    }
+
+    destroy_lattice_profile(*lap);
+    *lap = new_lap;
+
     free(epsilon);
+    free(rlist);
 }
 
 

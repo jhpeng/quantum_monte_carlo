@@ -9,7 +9,7 @@ void fine_temp_diluted_bilayer_heisenberg(int nx, int ny, double p, double jbond
     lattice_profile* lap;
     system_state* state;
     placeholder* ph;
-    estimators* est = create_estimators(nsample,5);
+    estimators* est = create_estimators(nsample,8);
 
     //set_site_diluted_bilayer(&lap,&state,&ph,nx,ny,jbond,p,seed);
     set_dimer_diluted_bilayer(&lap,&state,&ph,nx,ny,jbond,p,seed);

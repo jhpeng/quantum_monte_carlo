@@ -5,12 +5,12 @@
 #include "scheme_diluted_bilayer_heisenberg.h"
 
 
-int Help;
-int Mode, Nx, Ny;
-double P,Jbond,Beta,Beta_i,Beta_v,Beta_f;
-int Nsample, Nther, Nblock, Nit;
-int Seed;
-char Filename[128];
+static int Help;
+static int Mode, Nx, Ny;
+static double P,Jbond,Beta,Beta_i,Beta_v,Beta_f;
+static int Nsample, Nther, Nblock, Nit;
+static int Seed;
+static char Filename[128];
 void set_opt(int argc, char **argv)
 {
     int c;

@@ -32,7 +32,7 @@ void measurement_diluted_bilayor(estimators* est, placeholder* ph, const system_
     for(i=0;i<Nsite;++i){
         ph->sigma[i] = state->sigma[i];
         mz += state->sigma[i];
-        msz += state->sigma[i]*struct_factor_pi[i];;
+        msz += state->sigma[i]*struct_factor_pi[i];
         if(state->sigma[i]!=0) vol++;
     }
     double mag  = mz/Nsite*0.5;

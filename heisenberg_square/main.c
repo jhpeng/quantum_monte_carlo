@@ -374,7 +374,7 @@ void set_lattice_ladder_clean(int nx, int ny, double jbond, int x_open, int y_op
             Bondst[i_bond] = 1;
 
             if(y_open){
-                if(i%ny==(ny-1)) Bondst[i_bond] = 0;
+                if(j%ny==(ny-1)) Bondst[i_bond] = 0;
             }
         }
     }

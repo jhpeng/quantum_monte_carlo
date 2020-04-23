@@ -307,7 +307,7 @@ void beta_doubling(){
     int* seq = (int*)malloc(length*sizeof(int));
     for(int p=0;p<length;++p){
         if(p<L) seq[p] = Sequence[p];
-        else seq[p] = -1;
+        else seq[p] = Sequence[p-L];
     }
     free(Sequence);
     free(Linkv);
@@ -317,8 +317,7 @@ void beta_doubling(){
 
     L     = length;
     Beta *= 2;
-
-    //Noo *= 2;
+    Noo  *= 2;
 }
 
 
@@ -579,6 +578,17 @@ void measure_with_propagate_state(int i_sample){
         propagate_state(sp);
     }
 
+/*-------------------- check inner product ---------------------*/
+    int check = 0;
+    for(int i=0;i<Nsite;++i){
+        if(Sigma0[i]!=Sigmap[i]) check=1;
+    }
+    if(check){
+        printf("inner product become zero!\n");
+        exit(-1);
+    }
+/*--------------------------------------------------------------*/
+
     ms1 = ms1/L/Nsite*0.5;
     ms2 = ms2/L/Nsite/Nsite*0.25;
     ms4 = ms4/L/Nsite/Nsite/Nsite/Nsite*0.0625;
@@ -731,7 +741,7 @@ int main(int argc, char** argv){
             construct_link_vertex_list();
             loop_update();
             flip_bit_operator();
-            if(Noo*buffer>length){
+            if(Noo*buffer>L){
                 length = (int)(Noo*buffer)+10;
                 set_sequence_length(length);
             }
@@ -761,7 +771,7 @@ int main(int argc, char** argv){
                 construct_link_vertex_list();
                 loop_update();
                 flip_bit_operator();
-                if(Noo*buffer>length){
+                if(Noo*buffer>L){
                     length = (int)(Noo*buffer)+10;
                     set_sequence_length(length);
                 }
@@ -780,8 +790,7 @@ int main(int argc, char** argv){
                 estimator_fileout(Filename);
             }
             if(it%2==1){
-                Beta *=2;
-                //beta_doubling();
+                beta_doubling();
             }
         }
     }

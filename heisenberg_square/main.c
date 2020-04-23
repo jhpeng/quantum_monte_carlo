@@ -303,19 +303,22 @@ void flip_bit_operator(){
 
 
 void beta_doubling(){
-    int* seq = (int*)malloc(2*L*sizeof(int));
-    for(int i=0;i<2*L;++i){
-        seq[i] = Sequence[i%L];
+    int length =2*L;
+    int* seq = (int*)malloc(length*sizeof(int));
+    for(int p=0;p<length;++p){
+        if(p<L) seq[p] = Sequence[p];
+        else seq[p] = -1;
     }
     free(Sequence);
     free(Linkv);
 
     Sequence = seq;
-    Linkv = (int*)malloc(16*L*sizeof(int));
+    Linkv = (int*)malloc(8*length*sizeof(int));
 
-    Noo  *=2;
-    L    *=2;
-    Beta *=2;
+    L     = length;
+    Beta *= 2;
+
+    //Noo *= 2;
 }
 
 
@@ -329,7 +332,7 @@ void set_random_number(int seed){
     gsl_rng_set(rng,seed);
 }
 
-void set_lattice_ladder_clean(int nx, int ny, double jbond, int x_open, int y_open){
+void set_lattice_ladder(int nx, int ny, double jbond, double p, int x_open, int y_open){
     int i,j,t,q,index1,index2;
     Nz    = 1;
     Nsite = nx*ny;
@@ -357,7 +360,10 @@ void set_lattice_ladder_clean(int nx, int ny, double jbond, int x_open, int y_op
             Bond2index[i_bond*4+1] = index2;
             Bond2index[i_bond*4+2] = -1;
             Bond2index[i_bond*4+3] = -1;
-            if(i%2==0) Bondst[i_bond] = jbond;
+            if(i%2==0){
+                if(gsl_rng_uniform_pos(rng)<0.5) Bondst[i_bond] = 1+(jbond-1)*(1+p);
+                else Bondst[i_bond] = 1+(jbond-1)*(1-p);
+            }
             else Bondst[i_bond] = 1;
 
             if(x_open){
@@ -376,6 +382,73 @@ void set_lattice_ladder_clean(int nx, int ny, double jbond, int x_open, int y_op
             if(y_open){
                 if(j%ny==(ny-1)) Bondst[i_bond] = 0;
             }
+        }
+    }
+    for(i=0;i<Nsite;++i){
+        if(gsl_rng_uniform_pos(rng)<0.5) Sigma0[i]=1;
+        else Sigma0[i]=-1;
+    }
+}
+
+void set_lattice_herringbone(int nx, int ny, double jbond, double p){
+    int i,j,t,q,index1,index2;
+    double g;
+    Nz    = 1;
+    Nsite = nx*ny;
+    Nj    = 2*nx*ny;
+    Nq    = 0;
+
+    Sigma0 = (int*)malloc(Nsite*sizeof(int));
+    Sigmap = (int*)malloc(Nsite*sizeof(int));
+    Vfirst = (int*)malloc(Nsite*sizeof(int));
+    Vlast  = (int*)malloc(Nsite*sizeof(int));
+
+    Bond2index = (int*)malloc((Nj+Nq)*4*sizeof(int));
+    Bondst = (double*)malloc((Nj+Nq)*sizeof(double));
+
+    for(int i_bond=0;i_bond<(Nj+Nq);++i_bond){
+        t = i_bond%(nx*ny);
+        q = i_bond/(nx*ny);
+        i = t%nx;
+        j = t/nx;
+
+        if(q==0){
+            index1 = i+nx*j;
+            index2 = ((i+1)%nx)+nx*j;
+            Bond2index[i_bond*4+0] = index1;
+            Bond2index[i_bond*4+1] = index2;
+            Bond2index[i_bond*4+2] = -1;
+            Bond2index[i_bond*4+3] = -1;
+
+            if(gsl_rng_uniform_pos(rng)<0.5) g = 1+(jbond-1)*(1+p);
+            else g = 1+(jbond-1)*(1-p);
+
+            i = i%4; j = j%4;
+
+            if(i==1 && j==0) Bondst[i_bond] = g;
+            else if(i==2 && j==1) Bondst[i_bond] = g;
+            else if(i==3 && j==2) Bondst[i_bond] = g;
+            else if(i==0 && j==3) Bondst[i_bond] = g;
+            else Bondst[i_bond] = 1;
+        }
+        else if(q==1){
+            index1 = i+nx*j;
+            index2 = i+nx*((j+1)%ny);
+            Bond2index[i_bond*4+0] = index1;
+            Bond2index[i_bond*4+1] = index2;
+            Bond2index[i_bond*4+2] = -1;
+            Bond2index[i_bond*4+3] = -1;
+
+            if(gsl_rng_uniform_pos(rng)<0.5) g = 1+(jbond-1)*(1+p);
+            else g = 1+(jbond-1)*(1-p);
+
+            i = i%4; j = j%4;
+
+            if(i==0 && j==0) Bondst[i_bond] = g;
+            else if(i==1 && j==1) Bondst[i_bond] = g;
+            else if(i==2 && j==2) Bondst[i_bond] = g;
+            else if(i==3 && j==3) Bondst[i_bond] = g;
+            else Bondst[i_bond] = 1;
         }
     }
     for(i=0;i<Nsite;++i){
@@ -491,8 +564,6 @@ void measure_with_propagate_state(int i_sample){
     m2 = mz*mz*0.25;
     Data[Nobs*i_sample+0] = m1/Nsite;
     Data[Nobs*i_sample+1] = m2*Beta/Nsite;
-    Data[Nobs*i_sample+2] = Noo;
-    Data[Nobs*i_sample+3] = Noo*Noo;
 
     for(int p=0;p<L;++p){
         int sp = Sequence[p];
@@ -512,9 +583,17 @@ void measure_with_propagate_state(int i_sample){
     ms2 = ms2/L/Nsite/Nsite*0.25;
     ms4 = ms4/L/Nsite/Nsite/Nsite/Nsite*0.0625;
 
-    Data[Nobs*i_sample+4] = ms1;
-    Data[Nobs*i_sample+5] = ms2;
-    Data[Nobs*i_sample+6] = ms4;
+    Data[Nobs*i_sample+2] = ms1;
+    Data[Nobs*i_sample+3] = ms2;
+    Data[Nobs*i_sample+4] = ms4;
+
+    double noo = Noo;
+    Data[Nobs*i_sample+5] = noo;
+    Data[Nobs*i_sample+6] = noo*noo;
+
+    double se = 0;
+    for(int i=0;i<Nj;++i) se += Bondst[i];
+    Data[Nobs*i_sample+7] = (-noo/Beta + se*0.25)/Nsite;
 }
 
 /* ----------------------------------------------- **
@@ -525,7 +604,7 @@ int Help;
 void set_opt(int argc, char **argv)
 {
     int c;
-    while((c=getopt(argc,argv,"hx:y:j:b:n:k:t:s:f:m:l:p:"))!=-1){
+    while((c=getopt(argc,argv,"hx:y:j:b:n:k:t:e:s:f:m:l:p:"))!=-1){
         switch(c){
             case 'h':
                 Help=1;
@@ -533,6 +612,7 @@ void set_opt(int argc, char **argv)
                 printf("\t-h print this help\n");
                 printf("\t-l lattice type for the simulation\n");
                 printf("\t\t 0 : 2d ladder\n");
+                printf("\t\t 1 : 2d herringbone\n");
                 printf("\t-m mode for calculate observable\n");
                 printf("\t\t 0 : normal scheme\n");
                 printf("\t\t 1 : beta-doubling scheme\n");
@@ -541,6 +621,7 @@ void set_opt(int argc, char **argv)
                 printf("\t-x <length of x> default 8\n");
                 printf("\t-y <length of y> default 8\n");
                 printf("\t-j <Jp/J ratio> default 1.0\n");
+                printf("\t-p <strength of randomness> default 0.0\n");
                 printf("\t-b <beta> default 4.0\n");
                 printf("\t-n <Nsample> default 2000\n");
                 printf("\t-k <Nblock> default 50\n");
@@ -628,12 +709,13 @@ int main(int argc, char** argv){
 
 
     /*---------------set lattice-----------------*/
-    if(LatticeType==0) set_lattice_ladder_clean(Nx,Ny,Jbond,1,1);
+    if(LatticeType==0) set_lattice_ladder(Nx,Ny,Jbond,P,1,1);
+    else if(LatticeType==1) set_lattice_herringbone(Nx,Ny,Jbond,P);
     create_structure_factor(Nx,Ny,Nz,Nsite);
 
     set_sequence_length(length);
 
-    if(Mode==0 || Mode==1 || Mode==2) n_obs=7;
+    if(Mode==0 || Mode==1 || Mode==2) n_obs=8;
     else if(Mode==3) n_obs=4;
     set_estimator(n_obs,Nsample,Nblock);
 
@@ -697,7 +779,10 @@ int main(int argc, char** argv){
                 }
                 estimator_fileout(Filename);
             }
-            if(it%2==1) beta_doubling();
+            if(it%2==1){
+                Beta *=2;
+                //beta_doubling();
+            }
         }
     }
 

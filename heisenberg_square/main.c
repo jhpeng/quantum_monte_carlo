@@ -638,7 +638,7 @@ void set_opt(int argc, char **argv)
                 printf("\t-t <Nther> default 2000\n");
                 printf("\t-e number of iteration for beta-doubing scheme\n");
                 printf("\t-s <seed of random number generator> default 1\n");
-                printf("\t-f <the file name of output data> default \"test.txt\"\n");
+                printf("\t-o <the file name of output data> default \"test.txt\"\n");
                 break;
             case 'l':
                 LatticeType=atoi(optarg);
@@ -676,7 +676,7 @@ void set_opt(int argc, char **argv)
             case 's':
                 Seed=atoi(optarg);
                 break;
-            case 'f':
+            case 'o':
                 strcpy(Filename,optarg);
                 break;
         }
@@ -719,7 +719,7 @@ int main(int argc, char** argv){
 
 
     /*---------------set lattice-----------------*/
-    if(LatticeType==0) set_lattice_ladder(Nx,Ny,Jbond,P,1,1);
+    if(LatticeType==0) set_lattice_ladder(Nx,Ny,Jbond,P,0,1);
     else if(LatticeType==1) set_lattice_herringbone(Nx,Ny,Jbond,P);
     create_structure_factor(Nx,Ny,Nz,Nsite);
 

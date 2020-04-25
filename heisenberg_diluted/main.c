@@ -89,6 +89,7 @@ char Filename[128]="test.txt";
 */
 int Nblock,Nther,Seed;
 double Beta,Jbond,Qbond,P;
+double B_i,B_v,B_f;
 gsl_rng* rng;
 int Mode,LatticeType;
 int Nit;
@@ -608,7 +609,10 @@ void set_lattice_bilayer_site_diluted_largest_cluster(int nx, int ny, double jbo
                 max_s=cs;
                 index=i;
             }
+
+            for(j=0;j<cs;++j) epsilon[cluster[j]]=0;
         }
+
     }
 
     construct_cluster(index,cluster,&cs);
@@ -802,7 +806,7 @@ int Help;
 void set_opt(int argc, char **argv)
 {
     int c;
-    while((c=getopt(argc,argv,"hx:y:j:b:n:k:t:e:s:f:m:l:p:"))!=-1){
+    while((c=getopt(argc,argv,"hx:y:j:b:n:k:t:e:s:f:m:l:p:i:v:o:"))!=-1){
         switch(c){
             case 'h':
                 Help=1;
@@ -821,12 +825,15 @@ void set_opt(int argc, char **argv)
                 printf("\t-j <Jp/J ratio> default 1.0\n");
                 printf("\t-p <strength of randomness> default 0.0\n");
                 printf("\t-b <beta> default 4.0\n");
+                printf("\t-i <initial  beta> default 0.2\n");
+                printf("\t-f <final    beta> default 4.0\n");
+                printf("\t-v <interval beta> default 0.2\n");
                 printf("\t-n <Nsample> default 2000\n");
                 printf("\t-k <Nblock> default 50\n");
                 printf("\t-t <Nther> default 2000\n");
                 printf("\t-e number of iteration for beta-doubing scheme\n");
                 printf("\t-s <seed of random number generator> default 1\n");
-                printf("\t-f <the file name of output data> default \"test.txt\"\n");
+                printf("\t-o <the file name of output data> default \"test.txt\"\n");
                 break;
             case 'l':
                 LatticeType=atoi(optarg);
@@ -849,6 +856,15 @@ void set_opt(int argc, char **argv)
             case 'b':
                 Beta=atof(optarg);
                 break;
+            case 'i':
+                B_i=atof(optarg);
+                break;
+            case 'f':
+                B_f=atof(optarg);
+                break;
+            case 'v':
+                B_v=atof(optarg);
+                break;
             case 'n':
                 Nsample=atoi(optarg);
                 break;
@@ -864,7 +880,7 @@ void set_opt(int argc, char **argv)
             case 's':
                 Seed=atoi(optarg);
                 break;
-            case 'f':
+            case 'o':
                 strcpy(Filename,optarg);
                 break;
         }
@@ -895,6 +911,9 @@ int main(int argc, char** argv){
     Mode = 0;
     LatticeType = 0;
     Nit = 5;
+    B_i = 0.2;
+    B_v = 0.2;
+    B_f = 4.0;
 
 
     /*----------------get option-----------------*/
@@ -911,9 +930,6 @@ int main(int argc, char** argv){
     else if(LatticeType==1) set_lattice_bilayer_site_diluted_largest_cluster(Nx,Ny,Jbond,P);
     create_structure_factor(Nx,Ny,Nz,Nsite);
 
-    for(int i=0;i<Nj;++i){
-        printf("%d %d \n",Bond2index[4*i+0],Bond2index[4*i+1]);
-    }
     printf("Nsite = %d\n",Nsite);
     printf("Nc    = %d\n",Nc);
     printf("Nj    = %d\n",Nj);
@@ -989,6 +1005,38 @@ int main(int argc, char** argv){
             }
         }
     }
+/**************************************************************/
+/****************** Beta-increasing Scheme ********************/
+/**************************************************************/
+    else if(Mode==2){
+        for(Beta=B_i;Beta<B_f;Beta+=B_v){
+            /*---------------Thermalization--------------*/
+            for(int i_sample=0;i_sample<Nther;++i_sample){
+                diagonal_update();
+                construct_link_vertex_list();
+                loop_update();
+                flip_bit_operator();
+                if(Noo*buffer>L){
+                    length = (int)(Noo*buffer)+10;
+                    set_sequence_length(length);
+                }
+            }
+
+            /*---------------Measurement-----------------*/
+            for(int k=0;k<Nblock;++k){
+                for(int i_sample=0;i_sample<Nsample;++i_sample){
+                    diagonal_update();
+                    construct_link_vertex_list();
+                    loop_update();
+                    flip_bit_operator();
+
+                    measure_with_propagate_state(i_sample);
+                }
+                estimator_fileout(Filename);
+            }
+        }
+    }
+
 
     free_memory();
     return 0;

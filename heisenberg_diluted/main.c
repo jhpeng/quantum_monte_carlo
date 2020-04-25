@@ -813,13 +813,12 @@ void set_opt(int argc, char **argv)
                 printf("usage:\n");
                 printf("\t-h print this help\n");
                 printf("\t-l lattice type for the simulation\n");
-                printf("\t\t 0 : 2d ladder\n");
-                printf("\t\t 1 : 2d herringbone\n");
+                printf("\t\t 0 : 2d diluted-bilayer\n");
+                printf("\t\t 1 : 2d diluted-bilayer largest cluster\n");
                 printf("\t-m mode for calculate observable\n");
                 printf("\t\t 0 : normal scheme\n");
                 printf("\t\t 1 : beta-doubling scheme\n");
                 printf("\t\t 2 : beta increasing scheme\n");
-                printf("\t\t 3 : beta increasing scheme without propagate state\n");
                 printf("\t-x <length of x> default 8\n");
                 printf("\t-y <length of y> default 8\n");
                 printf("\t-j <Jp/J ratio> default 1.0\n");
@@ -929,10 +928,6 @@ int main(int argc, char** argv){
     if(LatticeType==0) set_lattice_bilayer_site_diluted(Nx,Ny,Jbond,P);
     else if(LatticeType==1) set_lattice_bilayer_site_diluted_largest_cluster(Nx,Ny,Jbond,P);
     create_structure_factor(Nx,Ny,Nz,Nsite);
-
-    printf("Nsite = %d\n",Nsite);
-    printf("Nc    = %d\n",Nc);
-    printf("Nj    = %d\n",Nj);
 
     set_sequence_length(length);
 

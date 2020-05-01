@@ -637,6 +637,8 @@ void set_opt(int argc, char **argv)
 ** ------------------- main ---------------------- **
 ** ----------------------------------------------- */ 
 
+
+#if 0
 int main(int argc, char** argv){
     int length=100;
     int n_obs=4;
@@ -747,3 +749,4 @@ int main(int argc, char** argv){
     free_memory();
     return 0;
 }
+#endif

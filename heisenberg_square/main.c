@@ -96,7 +96,7 @@ int Nit;
 ** ---------------- SSE algorithm ------------------- **
 ** -------------------------------------------------- */
 
-void propagate_state(int sp){
+void propagate_state(int* sigmap, const int* bond2index, int sp){
     if(sp==-1) return;
 
     int type   = sp%6;
@@ -104,18 +104,18 @@ void propagate_state(int sp){
     
     int i_bond = sp/6;
     if(type==1 || type==4){
-        Sigmap[Bond2index[i_bond*4+0]] *= -1;
-        Sigmap[Bond2index[i_bond*4+1]] *= -1;
+        sigmap[bond2index[i_bond*4+0]] *= -1;
+        sigmap[bond2index[i_bond*4+1]] *= -1;
     }
     else if(type==3){
-        Sigmap[Bond2index[i_bond*4+2]] *= -1;
-        Sigmap[Bond2index[i_bond*4+3]] *= -1;
+        sigmap[bond2index[i_bond*4+2]] *= -1;
+        sigmap[bond2index[i_bond*4+3]] *= -1;
     }
     else if(type==5){
-        Sigmap[Bond2index[i_bond*4+0]] *= -1;
-        Sigmap[Bond2index[i_bond*4+1]] *= -1;
-        Sigmap[Bond2index[i_bond*4+2]] *= -1;
-        Sigmap[Bond2index[i_bond*4+3]] *= -1;
+        sigmap[bond2index[i_bond*4+0]] *= -1;
+        sigmap[bond2index[i_bond*4+1]] *= -1;
+        sigmap[bond2index[i_bond*4+2]] *= -1;
+        sigmap[bond2index[i_bond*4+3]] *= -1;
     }
 }
 
@@ -165,58 +165,7 @@ void diagonal_update(){
                 Noo--;
             }
         }
-        else propagate_state(Sequence[p]);
-    }
-}
-
-void diagonal_update_exchange(){
-    int i_bond,s1,s2,s3,s4;
-    double dis;
-
-    for(int i=0;i<Nsite;++i){
-        Sigmap[i] = Sigma0[i];
-    }
-
-    for(int p=0;p<L;++p){
-        if(Sequence[p]%6==0){
-            i_bond = (int)(gsl_rng_uniform_pos(rng)*(Nj+Nq));
-            s1 = Sigmap[Bond2index[i_bond*4+0]];
-            s2 = Sigmap[Bond2index[i_bond*4+1]];
-            s3 = Sigmap[Bond2index[i_bond*4+2]];
-            s4 = Sigmap[Bond2index[i_bond*4+3]];
-            if(i_bond<Nj && s1!=s2){
-                dis = gsl_rng_uniform_pos(rng);
-                if(dis*Bondst[Sequence[p]/6]<Bondst[i_bond]){
-                    Sequence[p] = i_bond*6;
-                }
-            }
-            else if(s1!=s2 && s3!=s4){
-                dis = gsl_rng_uniform_pos(rng);
-                if(dis*Bondst[Sequence[p]/6]*2<Bondst[i_bond]){
-                    Sequence[p] = i_bond*6+2;
-                }
-            }
-        }
-        else if(Sequence[p]%6==2){
-            i_bond = (int)(gsl_rng_uniform_pos(rng)*(Nj+Nq));
-            s1 = Sigmap[Bond2index[i_bond*4+0]];
-            s2 = Sigmap[Bond2index[i_bond*4+1]];
-            s3 = Sigmap[Bond2index[i_bond*4+2]];
-            s4 = Sigmap[Bond2index[i_bond*4+3]];
-            if(i_bond<Nj && s1!=s2){
-                dis = gsl_rng_uniform_pos(rng);
-                if(dis*Bondst[Sequence[p]/6]<Bondst[i_bond]*2){
-                    Sequence[p] = i_bond*6;
-                }
-            }
-            else if(s1!=s2 && s3!=s4){
-                dis = gsl_rng_uniform_pos(rng);
-                if(dis*Bondst[Sequence[p]/6]<Bondst[i_bond]){
-                    Sequence[p] = i_bond*6+2;
-                }
-            }
-        }
-        else propagate_state(Sequence[p]);
+        else propagate_state(Sigmap,Bond2index,Sequence[p]);
     }
 }
 
@@ -575,7 +524,7 @@ void measure_with_propagate_state(int i_sample){
         ms1 += fabs(ms);
         ms2 += ms*ms;
         ms4 += ms*ms*ms*ms;
-        propagate_state(sp);
+        propagate_state(Sigmap,Bond2index,sp);
     }
 
 /*-------------------- check inner product ---------------------*/

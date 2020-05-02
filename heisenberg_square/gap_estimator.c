@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_fft_complex.h>
@@ -14,6 +15,7 @@ static gsl_fft_complex_workspace* Workspace;
 static double* Powerspectrum;
 static double* Data;
 static int M;
+static int N_estimate;
 
 void propagate_state(int* sigmap, const int* bond2index, int sp);
 
@@ -32,8 +34,10 @@ void gap_estimator_setup_workspace(int length){
     Workspace = gsl_fft_complex_workspace_alloc(n);
 
     Powerspectrum = (double*)malloc(sizeof(double)*n);
+    for(int i=0;i<n;++i) Powerspectrum[i]=0;
     Data = (double*)malloc(sizeof(double)*n*2);
     M=n;
+    N_estimate=0;
 
     Initialize=1;
     
@@ -71,53 +75,32 @@ void gap_estimator_collect_data(int* sequence, int length, int* sigma0, int* sig
     }
 }
 
-int
-main (void)
-{
-  int i,seed=1289731;
-  const int n = 1024*1024*4;
-  gap_estimator_setup_workspace(n);
-  double* data = (double*)malloc(sizeof(double)*2*n);
-  gsl_rng* rng = gsl_rng_alloc(gsl_rng_mt19937);
-  gsl_rng_set(rng,seed);
+void gap_estimator_calc_power_spectrum(){
+    int i;
+    double v;
 
-  gsl_fft_complex_wavetable * wavetable;
-  gsl_fft_complex_workspace * workspace;
+    gsl_fft_complex_forward(Data,1,M,Wavetable,Workspace);
 
-  for (i = 0; i < n; i++)
-    {
-      REAL(data,i) = gsl_rng_uniform_pos(rng);
-      IMAG(data,i) = gsl_rng_uniform_pos(rng);
+    for(i=0;i<M;++i){
+        v = REAL(Data,i)*REAL(Data,i)+IMAG(Data,i)*IMAG(Data,i);
+        Powerspectrum[i] += v;
     }
 
+    N_estimate++;
+}
 
-  for (i = 0; i < 0; i++)
-    {
-      printf ("%d: %e %e\n", i, REAL(data,i),
-                                IMAG(data,i));
-    }
-  printf ("\n");
+void gap_estimator_ave_power_spectrum_fileout(char* prefix){
+    int i;
 
-  wavetable = gsl_fft_complex_wavetable_alloc (n);
-  workspace = gsl_fft_complex_workspace_alloc (n);
+    for(i=0;i<M;++i) Powerspectrum[i] = Powerspectrum[i]/N_estimate/sqrt(M);
 
-  for (i = 0; i < (int) wavetable->nf; i++)
-    {
-       printf ("# factor %d: %zu\n", i,
-               wavetable->factor[i]);
-    }
+    char filename[128];
+    sprintf(filename,"%s.pow",prefix);
+    FILE *file = fopen(filename,"a");
 
-  gsl_fft_complex_forward (data, 1, n,
-                           wavetable, workspace);
+    for(int i=0;i<M;++i) fprintf(file,"%.16e ",Powerspectrum[i]);
+    fprintf(file,"\n");
 
-  for (i = 0; i < 0; i++)
-    {
-      printf ("%d: %e %e\n", i, REAL(data,i),
-                                IMAG(data,i));
-    }
-
-  gsl_fft_complex_wavetable_free (wavetable);
-  gsl_fft_complex_workspace_free (workspace);
-  free(data);
-  return 0;
+    for(i=0;i<M;++i) Powerspectrum[i] = 0;
+    N_estimate=0;
 }

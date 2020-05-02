@@ -5,6 +5,8 @@
 #include <math.h>
 #include <gsl/gsl_rng.h>
 
+#include "gap_estimator.h"
+
 /*
 **  define global variables here
 */
@@ -576,7 +578,7 @@ void set_opt(int argc, char **argv)
                 printf("\t\t 0 : normal scheme\n");
                 printf("\t\t 1 : beta-doubling scheme\n");
                 printf("\t\t 2 : beta increasing scheme\n");
-                printf("\t\t 3 : beta increasing scheme without propagate state\n");
+                printf("\t\t 3 : beta-doubling and gap estimator\n");
                 printf("\t-x <length of x> default 8\n");
                 printf("\t-y <length of y> default 8\n");
                 printf("\t-j <Jp/J ratio> default 1.0\n");
@@ -638,7 +640,7 @@ void set_opt(int argc, char **argv)
 ** ----------------------------------------------- */ 
 
 
-#if 0
+#if 1
 int main(int argc, char** argv){
     int length=100;
     int n_obs=4;
@@ -739,6 +741,52 @@ int main(int argc, char** argv){
                     measure_with_propagate_state(i_sample);
                 }
                 estimator_fileout(Filename);
+            }
+            if(it%2==1){
+                beta_doubling();
+            }
+        }
+    }
+/**************************************************************/
+/******************** Beta-doubling Scheme ********************/
+/**************************************************************/
+    else if(Mode==3){
+        for(int it=0;it<2*Nit;++it){
+            /*---------------Thermalization--------------*/
+            for(int i_sample=0;i_sample<Nther;++i_sample){
+                diagonal_update();
+                construct_link_vertex_list();
+                loop_update();
+                flip_bit_operator();
+                if(Noo*buffer>L){
+                    length = (int)(Noo*buffer)+10;
+                    set_sequence_length(length);
+                }
+            }
+
+            /*---------------Measurement-----------------*/
+            for(int k=0;k<Nblock;++k){
+                for(int i_sample=0;i_sample<Nsample;++i_sample){
+                    diagonal_update();
+                    construct_link_vertex_list();
+                    loop_update();
+                    flip_bit_operator();
+
+                    measure_with_propagate_state(i_sample);
+                }
+                estimator_fileout(Filename);
+            }
+
+            if(it==2*Nit-1){
+                gap_estimator_setup_workspace(L);
+                for(int k=0;k<Nblock;++k){
+                    for(int i_sample=0;i_sample<Nsample;++i_sample){
+                        gap_estimator_collect_data(Sequence,L,Sigma0,Sigmap,Nsite,Bond2index,StructFactor);
+                        gap_estimator_calc_power_spectrum();
+                    }
+                    gap_estimator_ave_power_spectrum_fileout(Filename);
+                }
+                gap_estimator_free_memory();
             }
             if(it%2==1){
                 beta_doubling();

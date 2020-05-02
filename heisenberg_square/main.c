@@ -565,7 +565,7 @@ int Help;
 void set_opt(int argc, char **argv)
 {
     int c;
-    while((c=getopt(argc,argv,"hx:y:j:b:n:k:t:e:s:f:m:l:p:"))!=-1){
+    while((c=getopt(argc,argv,"hx:y:j:b:n:k:t:e:s:o:m:l:p:"))!=-1){
         switch(c){
             case 'h':
                 Help=1;
@@ -781,6 +781,11 @@ int main(int argc, char** argv){
                 gap_estimator_setup_workspace(L);
                 for(int k=0;k<Nblock;++k){
                     for(int i_sample=0;i_sample<Nsample;++i_sample){
+                        diagonal_update();
+                        construct_link_vertex_list();
+                        loop_update();
+                        flip_bit_operator();
+
                         gap_estimator_collect_data(Sequence,L,Sigma0,Sigmap,Nsite,Bond2index,StructFactor);
                         gap_estimator_calc_power_spectrum();
                     }

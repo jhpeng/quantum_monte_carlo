@@ -40,6 +40,8 @@ void gap_estimator_setup_workspace(int length){
     N_estimate=0;
 
     Initialize=1;
+
+    printf("%d \n",M);
     
 }
 
@@ -48,10 +50,11 @@ void gap_estimator_free_memory(){
     gsl_fft_complex_workspace_free(Workspace);
     free(Powerspectrum);
     free(Data);
+    printf("%d \n",M);
 }
 
 void gap_estimator_collect_data(int* sequence, int length, int* sigma0, int* sigmap, int nsite, int* bond2index, double* structfactor){
-    int i,p,sp,type;
+    int i,i_bond,p,sp,type;
     int k=0;
     double dist = (double)length/M;
     double ms=0;
@@ -62,12 +65,15 @@ void gap_estimator_collect_data(int* sequence, int length, int* sigma0, int* sig
     for(p=0;p<length;++p){
         sp = sequence[p];
         type = sp%6;
+        i_bond = sp/6;
+        i = bond2index[i_bond*4+0];
 
         if(type==1) ms += -4*sigmap[i]*structfactor[i];
 
         if(p>k*dist && k<M){
             REAL(Data,k) = ms;
             IMAG(Data,k) = 0;
+            //printf("%d %e %e\n",k,ms,REAL(Data,k));
             k++;
         }
 
@@ -79,6 +85,7 @@ void gap_estimator_calc_power_spectrum(){
     int i;
     double v;
 
+    //for(i=0;i<M;++i) printf("%e\n",REAL(Data,i));
     gsl_fft_complex_forward(Data,1,M,Wavetable,Workspace);
 
     for(i=0;i<M;++i){
@@ -92,15 +99,16 @@ void gap_estimator_calc_power_spectrum(){
 void gap_estimator_ave_power_spectrum_fileout(char* prefix){
     int i;
 
-    for(i=0;i<M;++i) Powerspectrum[i] = Powerspectrum[i]/N_estimate/sqrt(M);
+    for(i=0;i<M;++i) Powerspectrum[i] = Powerspectrum[i]/N_estimate/M;
 
     char filename[128];
-    sprintf(filename,"%s.pow",prefix);
+    sprintf(filename,"%s.psd",prefix);
     FILE *file = fopen(filename,"a");
 
-    for(int i=0;i<M;++i) fprintf(file,"%.16e ",Powerspectrum[i]);
+    for(i=0;i<M;++i) fprintf(file,"%.16e ",Powerspectrum[i]);
     fprintf(file,"\n");
 
     for(i=0;i<M;++i) Powerspectrum[i] = 0;
+    fclose(file);
     N_estimate=0;
 }

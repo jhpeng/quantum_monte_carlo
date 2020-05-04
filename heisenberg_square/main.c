@@ -407,6 +407,84 @@ void set_lattice_herringbone(int nx, int ny, double jbond, double p){
     }
 }
 
+void set_lattice_bilayer(int nx, int ny, double jbond){
+    int i,j,t,q,index1,index2;
+    Nz    = 2;
+    Nsite = 2*nx*ny;
+    Nj    = 5*nx*ny;
+    Nq    = 0;
+
+    Sigma0 = (int*)malloc(Nsite*sizeof(int));
+    Sigmap = (int*)malloc(Nsite*sizeof(int));
+    Vfirst = (int*)malloc(Nsite*sizeof(int));
+    Vlast  = (int*)malloc(Nsite*sizeof(int));
+
+    Bond2index = (int*)malloc((Nj+Nq)*4*sizeof(int));
+    Bondst = (double*)malloc((Nj+Nq)*sizeof(double));
+
+    for(int i_bond=0;i_bond<(Nj+Nq);++i_bond){
+        t = i_bond%(nx*ny);
+        q = i_bond/(nx*ny);
+        i = t%nx;
+        j = t/nx;
+
+        if(q==0){
+            index1 = i+nx*j;
+            index2 = ((i+1)%nx)+nx*j;
+
+            Bond2index[i_bond*4+0] = index1;
+            Bond2index[i_bond*4+1] = index2;
+            Bond2index[i_bond*4+2] = -1;
+            Bond2index[i_bond*4+3] = -1;
+            Bondst[i_bond] = 1;
+        }
+        else if(q==1){
+            index1 = i+nx*j;
+            index2 = i+nx*((j+1)%ny);
+
+            Bond2index[i_bond*4+0] = index1;
+            Bond2index[i_bond*4+1] = index2;
+            Bond2index[i_bond*4+2] = -1;
+            Bond2index[i_bond*4+3] = -1;
+            Bondst[i_bond] = 1;
+        }
+        else if(q==2){
+            index1 = i+nx*j+nx*ny;
+            index2 = ((i+1)%nx)+nx*j+nx*ny;
+            Bond2index[i_bond*4+0] = index1;
+            Bond2index[i_bond*4+1] = index2;
+            Bond2index[i_bond*4+2] = -1;
+            Bond2index[i_bond*4+3] = -1;
+            Bondst[i_bond] = 1;
+        }
+        else if(q==3){
+            index1 = i+nx*j+nx*ny;
+            index2 = i+nx*((j+1)%ny)+nx*ny;
+
+            Bond2index[i_bond*4+0] = index1;
+            Bond2index[i_bond*4+1] = index2;
+            Bond2index[i_bond*4+2] = -1;
+            Bond2index[i_bond*4+3] = -1;
+            Bondst[i_bond] = 1;
+        }
+        else if(q==4){
+            index1 = i+nx*j;
+            index2 = i+nx*j+nx*ny;
+
+            Bond2index[i_bond*4+0] = index1;
+            Bond2index[i_bond*4+1] = index2;
+            Bond2index[i_bond*4+2] = -1;
+            Bond2index[i_bond*4+3] = -1;
+            Bondst[i_bond] = jbond;
+        }
+    }
+
+    for(i=0;i<2*nx*ny;++i){
+        if(gsl_rng_uniform_pos(rng)<0.5) Sigma0[i]=1;
+        else Sigma0[i]=-1;
+    }
+}
+
 void create_structure_factor(int nx, int ny, int nz, int nsite){
     int i,x,y,z;
     StructFactor = (double*)malloc(nsite*sizeof(double));
@@ -574,6 +652,7 @@ void set_opt(int argc, char **argv)
                 printf("\t-l lattice type for the simulation\n");
                 printf("\t\t 0 : 2d ladder\n");
                 printf("\t\t 1 : 2d herringbone\n");
+                printf("\t\t 2 : 2d bilayer\n");
                 printf("\t-m mode for calculate observable\n");
                 printf("\t\t 0 : normal scheme\n");
                 printf("\t\t 1 : beta-doubling scheme\n");
@@ -674,12 +753,12 @@ int main(int argc, char** argv){
     /*---------------set lattice-----------------*/
     if(LatticeType==0) set_lattice_ladder(Nx,Ny,Jbond,P,0,1);
     else if(LatticeType==1) set_lattice_herringbone(Nx,Ny,Jbond,P);
+    else if(LatticeType==2) set_lattice_bilayer(Nx,Ny,Jbond);
     create_structure_factor(Nx,Ny,Nz,Nsite);
 
     set_sequence_length(length);
 
-    if(Mode==0 || Mode==1 || Mode==2) n_obs=8;
-    else if(Mode==3) n_obs=4;
+    n_obs=8;
     set_estimator(n_obs,Nsample,Nblock);
 
 
@@ -765,17 +844,15 @@ int main(int argc, char** argv){
             }
 
             /*---------------Measurement-----------------*/
-            for(int k=0;k<Nblock;++k){
-                for(int i_sample=0;i_sample<Nsample;++i_sample){
-                    diagonal_update();
-                    construct_link_vertex_list();
-                    loop_update();
-                    flip_bit_operator();
+            for(int i_sample=0;i_sample<Nsample;++i_sample){
+                diagonal_update();
+                construct_link_vertex_list();
+                loop_update();
+                flip_bit_operator();
 
-                    measure_with_propagate_state(i_sample);
-                }
-                estimator_fileout(Filename);
+                measure_with_propagate_state(i_sample);
             }
+            estimator_fileout(Filename);
 
             if(it==2*Nit-1){
                 gap_estimator_setup_workspace(L);

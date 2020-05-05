@@ -581,6 +581,7 @@ void estimator_fileout(char* filename){
 void measure_with_propagate_state(int i_sample){
     double m1,m2,mz=0;
     double ms=0;
+    double msx=0;
     double ms1=0;
     double ms2=0;
     double ms4=0;
@@ -590,8 +591,6 @@ void measure_with_propagate_state(int i_sample){
 
     m1 = mz*0.5;
     m2 = mz*mz*0.25;
-    Data[Nobs*i_sample+0] = m1/Nsite;
-    Data[Nobs*i_sample+1] = m2*Beta/Nsite;
 
     for(int p=0;p<L;++p){
         int sp = Sequence[p];
@@ -599,12 +598,15 @@ void measure_with_propagate_state(int i_sample){
         int i_bond = sp/6;
         int i = Bond2index[i_bond*4+0];
 
-        if(type==1) ms += -4*Sigmap[i]*StructFactor[i];
+        if(type!=-1){
+            if(type==1) ms += -4*Sigmap[i]*StructFactor[i];
 
-        ms1 += fabs(ms);
-        ms2 += ms*ms;
-        ms4 += ms*ms*ms*ms;
-        propagate_state(Sigmap,Bond2index,sp);
+            msx += ms;
+            ms1 += fabs(ms);
+            ms2 += ms*ms;
+            ms4 += ms*ms*ms*ms;
+            propagate_state(Sigmap,Bond2index,sp);
+        }
     }
 
 /*-------------------- check inner product ---------------------*/
@@ -618,21 +620,35 @@ void measure_with_propagate_state(int i_sample){
     }
 /*--------------------------------------------------------------*/
 
-    ms1 = ms1/L/Nsite*0.5;
-    ms2 = ms2/L/Nsite/Nsite*0.25;
-    ms4 = ms4/L/Nsite/Nsite/Nsite/Nsite*0.0625;
+    double noo = Noo;
+
+    if(Noo!=0){
+        msx = Beta*(msx*msx+ms2)/noo/(noo+1)/Nsite/Nsite*0.25;
+        ms1 = ms1/noo/Nsite*0.5;
+        ms2 = ms2/noo/Nsite/Nsite*0.25;
+        ms4 = ms4/noo/Nsite/Nsite/Nsite/Nsite*0.0625;
+    }
+    else{
+        msx=0;
+        ms1 = fabs(ms)/Nsite*0.5;
+        ms2 = ms*ms/Nsite/Nsite*0.25;
+        ms4 = ms*ms*ms*ms/Nsite/Nsite/Nsite/Nsite*0.0625;
+    }
+
+    Data[Nobs*i_sample+0] = m1/Nsite;
+    Data[Nobs*i_sample+1] = m2*Beta/Nsite;
 
     Data[Nobs*i_sample+2] = ms1;
     Data[Nobs*i_sample+3] = ms2;
     Data[Nobs*i_sample+4] = ms4;
+    Data[Nobs*i_sample+5] = msx;
 
-    double noo = Noo;
-    Data[Nobs*i_sample+5] = noo;
-    Data[Nobs*i_sample+6] = noo*noo;
+    Data[Nobs*i_sample+6] = noo;
+    Data[Nobs*i_sample+7] = noo*noo;
 
     double se = 0;
     for(int i=0;i<Nj;++i) se += Bondst[i];
-    Data[Nobs*i_sample+7] = (-noo/Beta + se*0.25)/Nsite;
+    Data[Nobs*i_sample+8] = (-noo/Beta + se*0.25)/Nsite;
 }
 
 /* ----------------------------------------------- **
@@ -758,7 +774,7 @@ int main(int argc, char** argv){
 
     set_sequence_length(length);
 
-    n_obs=8;
+    n_obs=9;
     set_estimator(n_obs,Nsample,Nblock);
 
 
@@ -827,7 +843,7 @@ int main(int argc, char** argv){
         }
     }
 /**************************************************************/
-/******************** Beta-doubling Scheme ********************/
+/******************** Gap estimator Scheme ********************/
 /**************************************************************/
     else if(Mode==3){
         for(int it=0;it<2*Nit;++it){
@@ -865,8 +881,10 @@ int main(int argc, char** argv){
 
                         gap_estimator_collect_data(Sequence,L,Sigma0,Sigmap,Nsite,Bond2index,StructFactor);
                         gap_estimator_calc_power_spectrum();
+                        measure_with_propagate_state(i_sample);
                     }
                     gap_estimator_ave_power_spectrum_fileout(Filename);
+                    estimator_fileout(Filename);
                 }
                 gap_estimator_free_memory();
             }

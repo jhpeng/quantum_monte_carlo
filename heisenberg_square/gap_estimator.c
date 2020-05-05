@@ -38,11 +38,7 @@ void gap_estimator_setup_workspace(int length){
     Data = (double*)malloc(sizeof(double)*n*2);
     M=n;
     N_estimate=0;
-
     Initialize=1;
-
-    printf("%d \n",M);
-    
 }
 
 void gap_estimator_free_memory(){
@@ -50,7 +46,6 @@ void gap_estimator_free_memory(){
     gsl_fft_complex_workspace_free(Workspace);
     free(Powerspectrum);
     free(Data);
-    printf("%d \n",M);
 }
 
 void gap_estimator_collect_data(int* sequence, int length, int* sigma0, int* sigmap, int nsite, int* bond2index, double* structfactor){

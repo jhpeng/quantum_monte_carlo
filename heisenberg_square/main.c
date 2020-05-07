@@ -670,10 +670,10 @@ void set_opt(int argc, char **argv)
                 printf("\t\t 1 : 2d herringbone\n");
                 printf("\t\t 2 : 2d bilayer\n");
                 printf("\t-m mode for calculate observable\n");
-                printf("\t\t 0 : normal scheme\n");
-                printf("\t\t 1 : beta-doubling scheme\n");
-                printf("\t\t 2 : beta increasing scheme\n");
-                printf("\t\t 3 : beta-doubling and gap estimator\n");
+                printf("\t\t 0 : <normal>\n");
+                printf("\t\t 1 : <beta-doubling>\n");
+                printf("\t\t 2 : <beta increasing>\n");
+                printf("\t\t 3 : <beta-doubling> <gap estimator>\n");
                 printf("\t-x <length of x> default 8\n");
                 printf("\t-y <length of y> default 8\n");
                 printf("\t-j <Jp/J ratio> default 1.0\n");

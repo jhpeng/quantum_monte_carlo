@@ -573,7 +573,7 @@ void estimator_fileout(char* filename){
 
     FILE* ofile = fopen(filename,"a");
     fprintf(ofile,"%.5e ",Beta);
-    for(int i=0;i<Nobs;++i) fprintf(ofile,"%.5e ",mean[i]);
+    for(int i=0;i<Nobs;++i) fprintf(ofile,"%.16e ",mean[i]);
     fprintf(ofile,"\n");
     fclose(ofile);
 }

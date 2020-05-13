@@ -49,7 +49,7 @@ void gap_estimator_free_memory(){
 }
 
 void gap_estimator_collect_data(int* sequence, int length, int* sigma0, int* sigmap, int nsite, int* bond2index, double* structfactor){
-    int i,i_bond,p,sp,type;
+    int i,j,i_bond,p,sp,type;
     int k=0;
     double dist = (double)length/M;
     double ms=0;
@@ -62,8 +62,12 @@ void gap_estimator_collect_data(int* sequence, int length, int* sigma0, int* sig
         type = sp%6;
         i_bond = sp/6;
         i = bond2index[i_bond*4+0];
+        j = bond2index[i_bond*4+1];
 
-        if(type==1) ms += -4*sigmap[i]*structfactor[i];
+        if(type==1){
+            ms += -2*sigmap[i]*structfactor[i];
+            ms += -2*sigmap[j]*structfactor[j];
+        }
 
         if(p>k*dist && k<M){
             REAL(Data,k) = ms;

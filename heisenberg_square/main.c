@@ -579,27 +579,33 @@ void estimator_fileout(char* filename){
 }
 
 void measure_with_propagate_state(int i_sample){
+    int i,j,p,i_bond,type,sp;
     double m1,m2,mz=0;
     double ms=0;
     double msx=0;
     double ms1=0;
     double ms2=0;
     double ms4=0;
-    for(int i=0;i<Nsite;++i) Sigmap[i]=Sigma0[i];
-    for(int i=0;i<Nsite;++i) mz+=Sigma0[i];
-    for(int i=0;i<Nsite;++i) ms+=Sigma0[i]*StructFactor[i];
+    for(i=0;i<Nsite;++i) Sigmap[i]=Sigma0[i];
+    for(i=0;i<Nsite;++i) mz+=Sigma0[i];
+    for(i=0;i<Nsite;++i) ms+=Sigma0[i]*StructFactor[i];
 
     m1 = mz*0.5;
     m2 = mz*mz*0.25;
 
-    for(int p=0;p<L;++p){
-        int sp = Sequence[p];
-        int type = sp%6;
-        int i_bond = sp/6;
-        int i = Bond2index[i_bond*4+0];
+    for(p=0;p<L;++p){
+        sp = Sequence[p];
 
-        if(type!=-1){
-            if(type==1) ms += -4*Sigmap[i]*StructFactor[i];
+        if(sp!=-1){
+            type = sp%6;
+            i_bond = sp/6;
+            i = Bond2index[i_bond*4+0];
+            j = Bond2index[i_bond*4+1];
+
+            if(type==1){
+                ms += -2*Sigmap[i]*StructFactor[i];
+                ms += -2*Sigmap[j]*StructFactor[j];
+            }
 
             msx += ms;
             ms1 += fabs(ms);

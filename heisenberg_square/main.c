@@ -41,9 +41,9 @@ static int flip_rule[24]={
 ** Sequence : pointer to the operator sequence
 ** Linkv    : pointer to the link-vertex list (8L)
 */
-int L,Noo;
-int* Sequence;
-int* Linkv;
+static int L,Noo;
+static int* Sequence;
+static int* Linkv;
 
 /*
 ** Nsite : the total number of the spin
@@ -52,11 +52,11 @@ int* Linkv;
 ** Vfirst : the pointer to the first list
 ** Vlast  : the pointer to the last list
 */
-int Nsite;
-int* Sigma0;
-int* Sigmap;
-int* Vfirst;
-int* Vlast;
+static int Nsite;
+static int* Sigma0;
+static int* Sigmap;
+static int* Vfirst;
+static int* Vlast;
 
 /*
 ** Nj : the total number of the J-bonds
@@ -64,20 +64,20 @@ int* Vlast;
 ** Bond2index : the pointer which mapping the bond on four spin site
 ** Bondst : the pointer to the bond strenght
 */
-int Nx,Ny,Nz;
-int Nj,Nq;
-int* Bond2index;
-double* Bondst;
-double* StructFactor;
+static int Nx,Ny,Nz;
+static int Nj,Nq;
+static int* Bond2index;
+static double* Bondst;
+static double* StructFactor;
 
 /*
 ** Nobs    : the total number of the observables
 ** Nsample : the total number of the Monte Carlo sample
 ** Data : the pointer to the collected data
 */
-int Nobs,Nsample;
-double* Data;
-char Filename[128]="test.txt";
+static int Nobs,Nsample;
+static double* Data;
+static char Filename[128]="test.txt";
 
 /*
 ** Nblock  : the total number of the block data
@@ -87,11 +87,11 @@ char Filename[128]="test.txt";
 **             0 -> normal scheme
 **             1 -> beta doubling
 */
-int Nblock,Nther,Seed;
-double Beta,Jbond,Qbond,P;
-gsl_rng* rng;
-int Mode,LatticeType;
-int Nit;
+static int Nblock,Nther,Seed;
+static double Beta,Jbond,Qbond,P;
+static gsl_rng* rng;
+static int Mode,LatticeType;
+static int Nit;
 
 
 /* -------------------------------------------------- **

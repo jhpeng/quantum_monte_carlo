@@ -6,6 +6,7 @@
 #include <gsl/gsl_rng.h>
 
 #include "gap_estimator.h"
+#include "momentum.h"
 
 /*
 **  define global variables here
@@ -92,6 +93,8 @@ static double Beta,Jbond,Qbond,P;
 static gsl_rng* rng;
 static int Mode,LatticeType;
 static int Nit;
+
+static double PI = 3.141592653589793;
 
 
 /* -------------------------------------------------- **
@@ -851,7 +854,7 @@ int main(int argc, char** argv){
 /**************************************************************/
 /******************** Gap estimator Scheme ********************/
 /**************************************************************/
-    else if(Mode==3){
+    else if(Mode==3 || Mode==4){
         for(int it=0;it<2*Nit;++it){
             /*---------------Thermalization--------------*/
             for(int i_sample=0;i_sample<Nther;++i_sample){
@@ -877,7 +880,15 @@ int main(int argc, char** argv){
             estimator_fileout(Filename);
 
             if(it==2*Nit-1){
-                gap_estimator_setup_workspace(L);
+                if(Mode==3) gap_estimator_setup_workspace(L);
+                else if(Mode==4){
+                    int nk=3;
+                    double wk[]={
+                    PI,PI,PI,
+                    PI*(1.0+2.0/Nx),PI,PI,
+                    PI,PI*(1.0+2.0/Ny),PI};
+                    momentum_setup_workspace(Nx,Ny,Nz,nk,wk,Nsample);
+                }
                 for(int k=0;k<Nblock;++k){
                     for(int i_sample=0;i_sample<Nsample;++i_sample){
                         diagonal_update();
@@ -885,14 +896,19 @@ int main(int argc, char** argv){
                         loop_update();
                         flip_bit_operator();
 
-                        gap_estimator_collect_data(Sequence,L,Sigma0,Sigmap,Nsite,Bond2index,StructFactor);
-                        gap_estimator_calc_power_spectrum();
                         measure_with_propagate_state(i_sample);
+                        if(Mode==3){
+                            gap_estimator_collect_data(Sequence,L,Sigma0,Sigmap,Nsite,Bond2index,StructFactor);
+                            gap_estimator_calc_power_spectrum();
+                        }
+                        else if(Mode==4) momentum_collect_data(Sequence,L,Sigma0,Sigmap,Nsite,Bond2index,Beta,i_sample);
                     }
-                    gap_estimator_ave_power_spectrum_fileout(Filename);
+                    if(Mode==3) gap_estimator_ave_power_spectrum_fileout(Filename);
+                    else if(Mode==4) momentum_calc_mean_fileout(Filename);
                     estimator_fileout(Filename);
                 }
-                gap_estimator_free_memory();
+                if(Mode==3) gap_estimator_free_memory();
+                else if(Mode==4) momentum_free_memory();
             }
             if(it%2==1){
                 beta_doubling();

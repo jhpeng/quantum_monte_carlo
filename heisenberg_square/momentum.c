@@ -4,7 +4,7 @@
 #include <math.h>
 
 static int Init=0;
-static int Nq;
+static int Nk;
 static int Ns;
 static double *Struct_factor;
 static int N_estimate;
@@ -15,20 +15,20 @@ static double *Data;
 
 void propagate_state(int* sigmap, const int* bond2index, int sp);
 
-void momentum_setup_workspace(int nx, int ny, int nz, int nq, double* wave_vector, int n_sample){
+void momentum_setup_workspace(int nx, int ny, int nz, int nk, double* wave_vector, int n_sample){
     if(Init){
         free(Struct_factor);
         free(Data);
     }
 
-    Struct_factor = (double*)malloc(sizeof(double)*nx*ny*nz*nq*2);
-    Data = (double*)malloc(sizeof(double)*n_sample*nq*2);
+    Struct_factor = (double*)malloc(sizeof(double)*nx*ny*nz*nk*2);
+    Data = (double*)malloc(sizeof(double)*nk*2);
 
     int iq,ix,iy,iz;
     double qx,qy,qz;
-    double n0 = nx*ny*nz;
-    double n1 = nx*ny;
-    for(iq=0;iq<nq;++iq){
+    int n0 = nx*ny*nz;
+    int n1 = nx*ny;
+    for(iq=0;iq<nk;++iq){
         qx = wave_vector[3*iq+0];
         qy = wave_vector[3*iq+1];
         qz = wave_vector[3*iq+2];
@@ -42,11 +42,12 @@ void momentum_setup_workspace(int nx, int ny, int nz, int nq, double* wave_vecto
         }
         }
     }
+    for(iq=0;iq<2*nk;++iq) Data[iq]=0;
 
     Init=1;
-    Nq = nq;
+    Nk = nk;
     Ns = n0;
-    N_estimate=n_sample;
+    N_estimate=0;
 }
 
 void momentum_free_memory(){
@@ -54,12 +55,13 @@ void momentum_free_memory(){
     free(Data);
 }
 
-void momentum_collect_data(int* sequence, int length, int* sigma0, int* sigmap, int nsite, int* bond2index){
+void momentum_collect_data(int* sequence, int length, int* sigma0, int* sigmap, int nsite, int* bond2index, double beta, int i_sample){
     int i,j,i_bond,p,sp,type,iq;
-    double ms[2*Nq],msx[2*Nq],ms2[Nq];
+    int noo=0;
+    double ms[2*Nk],msx[2*Nk],ms2[Nk];
 
     for(i=0;i<nsite;++i) sigmap[i]=sigma0[i];
-    for(iq=0;iq<Nq;++iq){
+    for(iq=0;iq<Nk;++iq){
         REAL(ms,iq) = 0;
         IMAG(ms,iq) = 0;
         REAL(msx,iq) = 0;
@@ -78,9 +80,9 @@ void momentum_collect_data(int* sequence, int length, int* sigma0, int* sigmap, 
             type = sp%6;
             i_bond = sp/6;
             i = bond2index[i_bond*4+0];
-            j = bond2index[i_bond*4+q];
+            j = bond2index[i_bond*4+1];
 
-            for(iq=0;iq<Nq;++iq){
+            for(iq=0;iq<Nk;++iq){
                 if(type==1){
                     REAL(ms,iq) += -2*sigmap[i]*REAL(Struct_factor,iq*nsite+i);
                     REAL(ms,iq) += -2*sigmap[j]*REAL(Struct_factor,iq*nsite+j);
@@ -94,7 +96,44 @@ void momentum_collect_data(int* sequence, int length, int* sigma0, int* sigmap, 
             }
 
             propagate_state(sigmap,bond2index,sp);
+            ++noo;
         }
     }
+
+    for(iq=0;iq<Nk;++iq){
+        if(noo!=0){
+            REAL(msx,iq) = beta*(REAL(msx,iq)*REAL(msx,iq)+
+                IMAG(msx,iq)*IMAG(msx,iq)+ms2[iq])/noo/(noo+1)/nsite/nsite*0.25;
+            ms2[iq] = ms2[iq]/noo/nsite/nsite*0.25;
+        }
+        else{
+            ms2[iq] = (REAL(ms,iq)*REAL(ms,iq)+IMAG(ms,iq)*IMAG(ms,iq))/nsite/nsite*0.25;
+            REAL(msx,iq) = beta*ms2[iq];
+        }
+
+        Data[2*iq+0] += ms2[iq];
+        Data[2*iq+1] += REAL(msx,iq);
+    }
+
+    N_estimate++;
 }
 
+void momentum_calc_mean_fileout(char* prefix){
+    int i;
+
+    for(i=0;i<Nk;++i){
+        Data[2*i+0] = Data[2*i+0]/N_estimate;
+        Data[2*i+1] = Data[2*i+1]/N_estimate;
+    }
+
+    char filename[128];
+    sprintf(filename,"%s.mom",prefix);
+    FILE* file = fopen(filename,"a");
+    for(i=0;i<2*Nk;++i) fprintf(file,"%.16e ",Data[i]);
+    fprintf(file,"\n");
+
+    fclose(file);
+    for(i=0;i<2*Nk;++i) Data[i]=0;
+
+    N_estimate=0;
+}

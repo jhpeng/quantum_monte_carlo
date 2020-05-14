@@ -102,7 +102,7 @@ void gap_estimator_ave_power_spectrum_fileout(char* prefix){
 
     char filename[128];
     sprintf(filename,"%s.psd",prefix);
-    FILE *file = fopen(filename,"a");
+    FILE* file = fopen(filename,"a");
 
     for(i=0;i<M;++i) fprintf(file,"%.16e ",Powerspectrum[i]);
     fprintf(file,"\n");

@@ -261,7 +261,7 @@ void beta_doubling(){
     int* seq = (int*)malloc(length*sizeof(int));
     for(int p=0;p<length;++p){
         if(p<L) seq[p] = Sequence[p];
-        else seq[p] = Sequence[p-L];
+        else seq[p] = Sequence[2*L-1-p];
     }
     free(Sequence);
     free(Linkv);

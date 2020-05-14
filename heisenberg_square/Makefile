@@ -21,7 +21,7 @@ LFLAGS	= -L/usr/local/lib
 LIBS	= -lm -lgsl -lgslcblas
 
 # define the C object files
-OBJS	= main.o gap_estimator.o
+OBJS	= main.o gap_estimator.o momentum.o
 
 #define the directory for object
 OBJSDIR = object

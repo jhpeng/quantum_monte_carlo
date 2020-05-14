@@ -885,8 +885,8 @@ int main(int argc, char** argv){
                     int nk=3;
                     double wk[]={
                     PI,PI,PI,
-                    PI*(1.0+2.0/Nx),PI,PI,
-                    PI,PI*(1.0+2.0/Ny),PI};
+                    PI*(1.0+2.0/4.0),PI,PI,
+                    PI,PI*(1.0+2.0/8.0),PI};
                     momentum_setup_workspace(Nx,Ny,Nz,nk,wk,Nsample);
                 }
                 for(int k=0;k<Nblock;++k){

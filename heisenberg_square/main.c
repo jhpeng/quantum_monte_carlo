@@ -882,11 +882,13 @@ int main(int argc, char** argv){
             if(it==2*Nit-1){
                 if(Mode==3) gap_estimator_setup_workspace(L);
                 else if(Mode==4){
-                    int nk=3;
+                    int nk=5;
                     double wk[]={
                     PI,PI,PI,
-                    PI*(1.0+2.0/4.0),PI,PI,
-                    PI,PI*(1.0+2.0/8.0),PI};
+                    PI*(1.0+2.0/Nx),PI,PI,
+                    PI*(1.0+2.0/Nx),PI,PI,
+                    PI,PI*(1.0+2.0/Ny),PI,
+                    PI,PI*(1.0+4.0/Ny),PI};
                     momentum_setup_workspace(Nx,Ny,Nz,nk,wk,Nsample);
                 }
                 for(int k=0;k<Nblock;++k){
